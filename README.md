@@ -12,7 +12,9 @@ Then you can start using the library:
 ```rs
 use ferrisbox::{packets::client::tell::TellPacket, ChatboxClientInstance};
 
-let mut client = ChatboxClientInstance::new(license).await;
+// You can use Some("some chatbox endpoint") to use a custom chatbox endpoint
+// We are using default value of `wss://chat.reconnected.cc/v2`
+let mut client = ChatboxClientInstance::new(license, None).await;
 
 // Telling a user something
 client

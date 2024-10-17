@@ -13,8 +13,10 @@ pub struct ChatboxClientInstance {
 }
 
 impl ChatboxClientInstance {
-    pub async fn new(license: String) -> Self {
-        let url = format!("wss://chat.reconnected.cc/v2/{}", license);
+    pub async fn new(license: String, endpoint: Option<&str>) -> Self {
+        let endpoint = endpoint.unwrap_or("wss://chat.reconnected.cc/v2");
+        let url = format!("{}/{}", endpoint, license);
+
         let (stream, _) = connect_async(&url).await.expect("Failed to connect");
         let (mut sender, mut receiver) = stream.split();
 

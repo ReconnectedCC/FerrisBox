@@ -7,7 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .nth(1)
         .unwrap_or_else(|| panic!("this program requires at least one argument"));
 
-    let mut client = ChatboxClientInstance::new(license).await;
+    let mut client = ChatboxClientInstance::new(license, None).await;
 
     client
         .tell(TellPacket {
