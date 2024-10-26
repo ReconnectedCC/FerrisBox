@@ -21,4 +21,5 @@ pub enum PacketType {
     Players(players::PlayersPacket),
     Success(success::SuccessPacket),
     Event(events::EventPacket),
+    Ping,
 }
