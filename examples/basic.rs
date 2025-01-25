@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     client
         .tell(TellPacket {
-            user: "g6ys".to_owned(),
+            user: "EmmaKnijn".to_owned(),
             text: "Hello, World!".to_owned(),
             name: None,
             mode: None,

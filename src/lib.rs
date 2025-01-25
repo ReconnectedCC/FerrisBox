@@ -29,13 +29,13 @@ impl ChatboxClientInstance {
 
                 if message.is_text() {
                     let message = message.into_text().expect("Got invalid UTF8");
-                    let packet: packets::ServerPacket = serde_json::from_str(&message)
-                        .expect("Failed to deserialize server packet");
 
-                    ws_tx
-                        .send(packet)
-                        .await
-                        .expect("Failed to send packet to reciever.")
+                    if let Ok(packet) = serde_json::from_str::<packets::ServerPacket>(&message) {
+                        ws_tx
+                            .send(packet)
+                            .await
+                            .expect("Failed to send packet to reciever.")
+                    }
                 }
             }
         });
