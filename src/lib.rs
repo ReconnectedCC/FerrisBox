@@ -8,15 +8,18 @@ use tokio_tungstenite::{connect_async, tungstenite::Message};
 pub mod models;
 pub mod packets;
 
+pub struct ChatboxEventLoop {
+    rx: Receiver<packets::ServerPacket>,
+}
+
 #[derive(Debug)]
 pub struct ChatboxClientInstance {
     tx: Sender<packets::ClientPacket>,
-    rx: Receiver<packets::ServerPacket>,
     last_message_id: AtomicI32,
 }
 
 impl ChatboxClientInstance {
-    pub async fn new(license: String, endpoint: Option<&str>) -> Self {
+    pub async fn new(license: String, endpoint: Option<&str>) -> (ChatboxClientInstance, ChatboxEventLoop) {
         let endpoint = endpoint.unwrap_or("wss://chat.reconnected.cc/v2");
         let url = format!("{}/{}", endpoint, license);
 
@@ -34,10 +37,10 @@ impl ChatboxClientInstance {
                     let message = message.into_text().expect("Got invalid UTF8");
 
                     if let Ok(packet) = serde_json::from_str::<packets::ServerPacket>(&message) {
-                        ws_tx
-                            .send(packet)
-                            .await
-                            .expect("Failed to send packet to reciever.")
+                        if let Err(e) = ws_tx.send(packet).await {
+                            tracing::error!("Failed to send packet to reciever: {}", e);
+                            break;
+                        }
                     }
                 }
             }
@@ -56,14 +59,15 @@ impl ChatboxClientInstance {
             }
         });
 
-        ChatboxClientInstance {
+        (ChatboxClientInstance {
             tx,
-            rx: ws_rx,
             last_message_id: AtomicI32::new(0),
-        }
+        }, ChatboxEventLoop {
+            rx: ws_rx,
+        })
     }
 
-    pub async fn tell(self, message: packets::client::tell::TellPacket) {
+    pub async fn tell(&self, message: packets::client::tell::TellPacket) {
         let tx = &self.tx;
 
         let packet_type = packets::client::PacketType::Tell(message);
@@ -77,7 +81,7 @@ impl ChatboxClientInstance {
             .expect("Failed to send packet to reciever.");
     }
 
-    pub async fn say(self, message: packets::client::say::SayPacket) {
+    pub async fn say(&self, message: packets::client::say::SayPacket) {
         let tx = &self.tx;
 
         let packet_type = packets::client::PacketType::Say(message);
@@ -92,7 +96,7 @@ impl ChatboxClientInstance {
     }
 }
 
-impl Stream for ChatboxClientInstance {
+impl Stream for ChatboxEventLoop {
     type Item = packets::ServerPacket;
 
     fn poll_next(
