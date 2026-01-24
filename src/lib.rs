@@ -8,6 +8,7 @@ use tokio_tungstenite::{connect_async, tungstenite::Message};
 pub mod models;
 pub mod packets;
 
+#[derive(Debug)]
 pub struct ChatboxEventLoop {
     rx: Receiver<packets::ServerPacket>,
 }
