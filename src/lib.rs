@@ -1,3 +1,6 @@
+use std::sync::atomic::AtomicI32;
+use std::sync::atomic::Ordering;
+
 use futures::{SinkExt, Stream, StreamExt};
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
@@ -9,7 +12,7 @@ pub mod packets;
 pub struct ChatboxClientInstance {
     tx: Sender<packets::ClientPacket>,
     rx: Receiver<packets::ServerPacket>,
-    last_message_id: i32,
+    last_message_id: AtomicI32,
 }
 
 impl ChatboxClientInstance {
@@ -56,40 +59,36 @@ impl ChatboxClientInstance {
         ChatboxClientInstance {
             tx,
             rx: ws_rx,
-            last_message_id: 0,
+            last_message_id: AtomicI32::new(0),
         }
     }
 
-    pub async fn tell(&mut self, message: packets::client::tell::TellPacket) {
+    pub async fn tell(self, message: packets::client::tell::TellPacket) {
         let tx = &self.tx;
 
         let packet_type = packets::client::PacketType::Tell(message);
         let packet = packets::ClientPacket {
             packet_type,
-            id: self.last_message_id,
+            id: self.last_message_id.fetch_add(1, Ordering::Relaxed),
         };
 
         tx.send(packet)
             .await
             .expect("Failed to send packet to reciever.");
-
-        self.last_message_id += 1;
     }
 
-    pub async fn say(&mut self, message: packets::client::say::SayPacket) {
+    pub async fn say(self, message: packets::client::say::SayPacket) {
         let tx = &self.tx;
 
         let packet_type = packets::client::PacketType::Say(message);
         let packet = packets::ClientPacket {
             packet_type,
-            id: self.last_message_id,
+            id: self.last_message_id.fetch_add(1, Ordering::Relaxed),
         };
 
         tx.send(packet)
             .await
             .expect("Failed to send packet to reciever.");
-
-        self.last_message_id += 1;
     }
 }
 
