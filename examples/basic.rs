@@ -7,7 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .nth(1)
         .unwrap_or_else(|| panic!("this program requires at least one argument"));
 
-    let mut client = ChatboxClientInstance::new(license, None).await;
+    let (client, mut events) = ChatboxClientInstance::new(license, None).await;
 
     client
         .tell(TellPacket {
@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .await;
 
-    while let Some(server_packet) = client.next().await {
+    while let Some(server_packet) = events.next().await {
         println!("{:?}", server_packet);
     }
 

@@ -14,7 +14,7 @@ use ferrisbox::{packets::client::tell::TellPacket, ChatboxClientInstance};
 
 // You can use Some("some chatbox endpoint") to use a custom chatbox endpoint
 // We are using default value of `wss://chat.reconnected.cc/v2`
-let mut client = ChatboxClientInstance::new(license, None).await;
+let (client, mut events) = ChatboxClientInstance::new(license, None).await;
 
 // Telling a user something
 client
@@ -27,7 +27,7 @@ client
     .await;
 
 // Receiving messages from the chatbox server
-while let Some(server_packet) = client.next().await {
+while let Some(server_packet) = events.next().await {
     println!("{:?}", server_packet);
 }
 ```
